@@ -15,6 +15,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/keypairs"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/schedulerhints"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/portsbinding"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -114,6 +115,9 @@ func (ex *Executor) resolveServerNetworks(ctx context.Context, machineName strin
 		subnetID       = ex.Config.Spec.SubnetID
 		networks       = ex.Config.Spec.Networks
 		serverNetworks = make([]servers.Network, 0)
+
+		securityGroupIDs       []string
+		additionalNetworkPorts = ex.Config.Spec.AdditionalNetworkPorts
 	)
 
 	klog.V(3).Infof("resolving network setup for machine [Name=%q]", machineName)
@@ -124,13 +128,58 @@ func (ex *Executor) resolveServerNetworks(ctx context.Context, machineName strin
 			return nil, err
 		}
 
+		for _, securityGroup := range ex.Config.Spec.SecurityGroups {
+			securityGroupID, err := ex.Network.GroupIDFromName(securityGroup)
+			if err != nil {
+				return nil, err
+			}
+			securityGroupIDs = append(securityGroupIDs, securityGroupID)
+		}
+
+		createOpts := portsbinding.CreateOptsExt{
+			CreateOptsBuilder: &ports.CreateOpts{
+				Name:                machineName,
+				NetworkID:           ex.Config.Spec.NetworkID,
+				FixedIPs:            []ports.IP{{SubnetID: *ex.Config.Spec.SubnetID}},
+				AllowedAddressPairs: []ports.AddressPair{{IPAddress: ex.Config.Spec.PodNetworkCidr}},
+				SecurityGroups:      &securityGroupIDs,
+			},
+		}
+
 		klog.V(3).Infof("deploying machine [Name=%q] in subnet [ID=%q]", machineName, *subnetID)
-		portID, err := ex.getOrCreatePort(ctx, machineName)
+		portID, err := ex.getOrCreatePort(ctx, machineName, createOpts)
 		if err != nil {
 			return nil, err
 		}
 
 		serverNetworks = append(serverNetworks, servers.Network{UUID: ex.Config.Spec.NetworkID, Port: portID})
+
+		for _, additionalPort := range additionalNetworkPorts {
+
+			createOpts = portsbinding.CreateOptsExt{
+				CreateOptsBuilder: &ports.CreateOpts{
+					Name:      additionalPort.NetworkName + "-" + machineName,
+					NetworkID: additionalPort.NetworkId,
+				},
+			}
+
+			if len(additionalPort.VnicType) > 0 {
+				createOpts.VNICType = additionalPort.VnicType
+			}
+			
+			for key, profile := range additionalPort.BindingProfile {
+				createOpts.Profile[key] = profile
+			}
+
+			portID, err := ex.getOrCreatePort(ctx, additionalPort.NetworkName + "-" + machineName, createOpts)
+			if err != nil {
+				return nil, err
+			}
+
+			serverNetworks = append(serverNetworks, servers.Network{UUID: additionalPort.NetworkId, Port: portID})
+
+		}
+
 		return serverNetworks, nil
 	}
 
@@ -466,6 +515,13 @@ func (ex *Executor) DeleteMachine(ctx context.Context, machineName, providerID s
 		if err != nil {
 			return err
 		}
+
+		for _, additionalPort := range ex.Config.Spec.AdditionalNetworkPorts {
+			err := ex.deletePort(ctx, additionalPort.NetworkName + "-" + machineName)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if ex.Config.Spec.RootDiskType != nil {
@@ -475,41 +531,26 @@ func (ex *Executor) DeleteMachine(ctx context.Context, machineName, providerID s
 	return nil
 }
 
-func (ex *Executor) getOrCreatePort(_ context.Context, machineName string) (string, error) {
+func (ex *Executor) getOrCreatePort(_ context.Context, name string, createOpts portsbinding.CreateOptsExt) (string, error) {
 	var (
-		err              error
-		securityGroupIDs []string
+		err error
 	)
 
-	portID, err := ex.Network.PortIDFromName(machineName)
+	portID, err := ex.Network.PortIDFromName(name)
 	if err == nil {
-		klog.V(2).Infof("found port [Name=%q, ID=%q]... skipping creation", machineName, portID)
+		klog.V(2).Infof("found port [Name=%q, ID=%q]... skipping creation", name, portID)
 		return portID, nil
 	}
 
 	if !client.IsNotFoundError(err) {
-		klog.V(5).Infof("error fetching port [Name=%q]: %s", machineName, err)
-		return "", fmt.Errorf("error fetching port [Name=%q]: %s", machineName, err)
+		klog.V(5).Infof("error fetching port [Name=%q]: %s", name, err)
+		return "", fmt.Errorf("error fetching port [Name=%q]: %s", name, err)
 	}
 
-	klog.V(5).Infof("port [Name=%q] does not exist", machineName)
-	klog.V(3).Infof("creating port [Name=%q]... ", machineName)
+	klog.V(5).Infof("port [Name=%q] does not exist", name)
+	klog.V(3).Infof("creating port [Name=%q]... ", name)
 
-	for _, securityGroup := range ex.Config.Spec.SecurityGroups {
-		securityGroupID, err := ex.Network.GroupIDFromName(securityGroup)
-		if err != nil {
-			return "", err
-		}
-		securityGroupIDs = append(securityGroupIDs, securityGroupID)
-	}
-
-	port, err := ex.Network.CreatePort(&ports.CreateOpts{
-		Name:                machineName,
-		NetworkID:           ex.Config.Spec.NetworkID,
-		FixedIPs:            []ports.IP{{SubnetID: *ex.Config.Spec.SubnetID}},
-		AllowedAddressPairs: []ports.AddressPair{{IPAddress: ex.Config.Spec.PodNetworkCidr}},
-		SecurityGroups:      &securityGroupIDs,
-	})
+	port, err := ex.Network.CreatePort(createOpts)
 	if err != nil {
 		return "", err
 	}

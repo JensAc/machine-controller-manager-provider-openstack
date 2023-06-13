@@ -219,6 +219,21 @@ string
 and only one should be specified.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>additionalNetworkPorts</code></br>
+<em>
+<a href="#openstack.machine.gardener.cloud/v1alpha1.OpenStackNetworkPort">
+[]OpenStackNetworkPort
+</a>
+</em>
+</td>
+<td>
+<p>AddtionalNetworksPorts is a list of network ports the instance will be
+attached to. AddtionalNetworks is not mutually exclusive with the
+NetwrokID option and both can be specified</p>
+</td>
+</tr>
 </table>
 </td>
 </tr>
@@ -423,6 +438,21 @@ string
 and only one should be specified.</p>
 </td>
 </tr>
+<tr>
+<td>
+<code>additionalNetworkPorts</code></br>
+<em>
+<a href="#openstack.machine.gardener.cloud/v1alpha1.OpenStackNetworkPort">
+[]OpenStackNetworkPort
+</a>
+</em>
+</td>
+<td>
+<p>AddtionalNetworksPorts is a list of network ports the instance will be
+attached to. AddtionalNetworks is not mutually exclusive with the
+NetwrokID option and both can be specified</p>
+</td>
+</tr>
 </tbody>
 </table>
 <h3 id="openstack.machine.gardener.cloud/v1alpha1.OpenStackNetwork">OpenStackNetwork
@@ -473,6 +503,64 @@ bool
 </td>
 <td>
 <p>PodNetwork specifies whether this network is part of the pod network.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<h3 id="openstack.machine.gardener.cloud/v1alpha1.OpenStackNetworkPort">OpenStackNetworkPort
+</h3>
+<p>
+(<em>Appears on:</em>
+<a href="#openstack.machine.gardener.cloud/v1alpha1.MachineProviderConfigSpec">MachineProviderConfigSpec</a>)
+</p>
+<p>
+</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<code>networkId</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>networkName</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>vnicType</code></br>
+<em>
+string
+</em>
+</td>
+<td>
+</td>
+</tr>
+<tr>
+<td>
+<code>bindingProfile</code></br>
+<em>
+map[string][]string
+</em>
+</td>
+<td>
 </td>
 </tr>
 </tbody>

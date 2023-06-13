@@ -57,6 +57,10 @@ type MachineProviderConfigSpec struct {
 	// Networks is a list of networks the instance should belong to. Networks is mutually exclusive with the NetworkID option
 	// and only one should be specified.
 	Networks []OpenStackNetwork `json:"networks,omitempty"`
+	// AddtionalNetworksPorts is a list of network ports the instance will be
+	// attached to. AddtionalNetworks is not mutually exclusive with the
+	// NetwrokID option and both can be specified
+	AdditionalNetworkPorts []OpenStackNetworkPort `json:"additionalNetworkPorts,omitempty"`
 }
 
 // OpenStackNetwork describes a network this instance should belong to.
@@ -67,4 +71,11 @@ type OpenStackNetwork struct {
 	Name string `json:"name,omitempty"`
 	// PodNetwork specifies whether this network is part of the pod network.
 	PodNetwork bool `json:"podNetwork,omitempty"`
+}
+
+type OpenStackNetworkPort struct {
+	NetworkId      string                 `json:"networkId,omitempty"`
+	NetworkName    string                 `json:"networkName,omitempty"`
+	VnicType       string                 `json:"vnicType,omitempty"`
+	BindingProfile map[string][]string `json:"bindingProfile,omitempty"`
 }
