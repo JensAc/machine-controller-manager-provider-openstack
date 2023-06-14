@@ -168,7 +168,7 @@ func Convert_openstack_OpenStackNetwork_To_v1alpha1_OpenStackNetwork(in *opensta
 }
 
 func autoConvert_v1alpha1_OpenStackNetworkPort_To_openstack_OpenStackNetworkPort(in *OpenStackNetworkPort, out *openstack.OpenStackNetworkPort, s conversion.Scope) error {
-	out.NetworkId = in.NetworkId
+	out.NetworkID = in.NetworkID
 	out.NetworkName = in.NetworkName
 	out.VnicType = in.VnicType
 	out.BindingProfile = *(*map[string][]string)(unsafe.Pointer(&in.BindingProfile))
@@ -181,7 +181,7 @@ func Convert_v1alpha1_OpenStackNetworkPort_To_openstack_OpenStackNetworkPort(in 
 }
 
 func autoConvert_openstack_OpenStackNetworkPort_To_v1alpha1_OpenStackNetworkPort(in *openstack.OpenStackNetworkPort, out *OpenStackNetworkPort, s conversion.Scope) error {
-	out.NetworkId = in.NetworkId
+	out.NetworkID = in.NetworkID
 	out.NetworkName = in.NetworkName
 	out.VnicType = in.VnicType
 	out.BindingProfile = *(*map[string][]string)(unsafe.Pointer(&in.BindingProfile))

@@ -74,8 +74,12 @@ type OpenStackNetwork struct {
 }
 
 type OpenStackNetworkPort struct {
-	NetworkId      string                 `json:"networkId,omitempty"`
-	NetworkName    string                 `json:"networkName,omitempty"`
-	VnicType       string                 `json:"vnicType,omitempty"`
+	// The openstack network ID
+	NetworkID string `json:"networkID,omitempty"`
+	// The openstack network name
+	NetworkName string `json:"networkName,omitempty"`
+	// The openstack vnic type for the port to be created
+	VnicType string `json:"vnicType,omitempty"`
+	// The openstack binding profile for the port to be created
 	BindingProfile map[string][]string `json:"bindingProfile,omitempty"`
 }

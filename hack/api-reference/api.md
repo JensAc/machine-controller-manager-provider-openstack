@@ -525,12 +525,13 @@ bool
 <tbody>
 <tr>
 <td>
-<code>networkId</code></br>
+<code>networkID</code></br>
 <em>
 string
 </em>
 </td>
 <td>
+<p>The openstack network ID</p>
 </td>
 </tr>
 <tr>
@@ -541,6 +542,7 @@ string
 </em>
 </td>
 <td>
+<p>The openstack network name</p>
 </td>
 </tr>
 <tr>
@@ -551,6 +553,7 @@ string
 </em>
 </td>
 <td>
+<p>The openstack vnic type for the port to be created</p>
 </td>
 </tr>
 <tr>
@@ -561,6 +564,7 @@ map[string][]string
 </em>
 </td>
 <td>
+<p>The openstack binding profile for the port to be created</p>
 </td>
 </tr>
 </tbody>
